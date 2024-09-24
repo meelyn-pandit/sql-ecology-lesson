@@ -1,0 +1,20 @@
+-- Sorting
+-- Order by taxa in ascending ORDER
+SELECT *
+FROM species
+ORDER BY taxa ASC;
+
+-- sort in descending ORDER
+SELECT *
+FROM species
+ORDER BY taxa DESC;
+
+-- sort genus and species to make it truly alphabetical
+SELECT *
+FROM species
+ORDER BY genus ASC, species ASC;
+
+-- challenge - write a query that returns year, species_id, and weight in kg from the surveys table, sorted with the largest weights at teh top.
+SELECT year, species_id, weight/1000
+FROM surveys
+ORDER BY weight DESC;

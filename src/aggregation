@@ -1,0 +1,132 @@
+-- aggregating and grouping data
+
+-- find out how many individuals there are, using COUNT, counts the number of rows
+SELECT COUNT(*)
+FROM surveys;
+
+-- find out how much all individuals weigh
+SELECT COUNT(*), SUM(weight)
+FROM surveys;
+
+-- output in kg
+SELECT ROUND(SUM(weight)/1000.00, 3)
+FROM surveys;
+
+-- challenge: return total weight, average weight, min and max weights for all animals caught over the duration of the survey. then return weights only between 5 and 10
+SELECT SUM(weight), AVG(weight), MIN(weight), MAX(weight)
+FROM surveys
+WHERE (weight >= 5) AND (weight <= 10);
+
+-- see how many individuals were counted in each species using GROUP BY clause
+SELECT species_id, COUNT(*)
+FROM surveys
+GROUP BY species_id;
+
+-- group by tells sql what field or fields we want to use to aggregate the data. If we want to group by multiple fields, we give GROUP BY a comma separated list
+
+-- challenge
+	-- 1. how many individuals were counted in each year in total
+	-- 2. how many were counted each year, for each different species
+	-- 3. the average weights of each species in each year
+
+--1)
+SELECT year, species_id,
+COUNT(*),
+ROUND(AVG(weight),2)
+FROM surveys
+GROUP BY year, species_id;
+
+-- ordering aggregated results
+SELECT species_id, COUNT(*)
+FROM surveys
+GROUP BY species_id
+ORDER BY COUNT(species_id);
+
+-- Aliases - use aliases to assign new names to things in the query.
+SELECT MAX(year) AS last_surveyed_year
+FROM surveys;
+
+-- The AS isn't technically required, so you could do
+SELECT MAX(year) last_surveyed_year
+FROM surveys;
+
+-- but using AS is much clearer so it is good style to include it.
+-- can also alias table names
+
+SELECT *
+FROM surveys AS surv;
+
+-- again the AS keyword is not required, so this works too:
+
+SELECT *
+FROM surveys surv;
+
+-- the HAVING keyword - filter results based on aggregate functions
+-- return only info about species with a count higher than 10
+SELECT species_id, COUNT(species_id)
+FROM surveys
+GROUP BY species_id
+HAVING COUNT(species_id) > 10;
+
+-- the HAVING keyword works exactly like WHERE but uses aggregate functions instead of database fields to filter.
+
+-- use the AS keyword to assign an alias to a column or table, and refer to that alias in the HAVING clause.
+-- call COUNT(species_id) by another name, like occurrences:
+
+SELECT species_id, COUNT(species_id) AS occurrences
+FROM surveys
+GROUP BY species_id
+HAVING occurrences > 10;
+
+-- note that in both queries, HAVING comes after GROUP BY. One way to think about this is: the data are retrieved (SELECT), which can be filtered (WHERE), then joined in gorups (GROUP BY)
+-- finally we can filter again based on some of these groups (HAVING)
+
+-- Challenge - write a query that returns, from the species table, the number of species in each taxa, only for the taxa with more than 10 species
+SELECT taxa, COUNT(species_id) AS occurrences
+FROM species
+GROUP BY taxa
+HAVING occurrences > 10;
+
+-- saving queries for future use
+-- views - a form of query that is saved in the database, and can be used to look at, filter, and even update information.
+-- think of views as a table that you can read, aggregate, and filter info from several places before showing it to you
+
+-- create a view from a query requires us to add CREATE VIEW viewname AS before the query.
+--CREATE VIEW summer_2000 AS
+--SELECT *
+--FROM surveys
+--WHERE year = 2000 and (month > 4 AND month < 10);
+
+SELECT *
+FROM summer_2000
+WHERE species_id = 'PE';
+
+-- what about null?
+-- when we count the weight field specifically, SQL ignores the records with data missing in that field.
+-- COUNT(*) and COUNT(field) can return different values
+SELECT SUM(weight), COUNT(weight), SUM(WEIGHT)/COUNT(weight), AVG(weight)
+FROM summer_2000
+WHERE species_id = 'PE';
+
+-- sql doesn't automatically include null values in negative conditionals
+-- count all non-female individuals - 382
+SELECT COUNT(*)
+FROM summer_2000
+WHERE sex != 'F';
+
+-- count all non-male individuals - 366
+SELECT COUNT(*)
+FROM summer_2000
+WHERE sex != 'M';
+
+-- count all individuals - 793
+SELECT COUNT(*)
+FROM summer_2000;
+
+-- not males and not females don't add up to all individuals.
+-- negative conditional queries divide data into three categories: x, not null not x, and null. then it returns the 'not null not x' group.
+
+-- include missing VALUES - females and null - 411
+SELECT COUNT(*)
+FROM summer_2000
+WHERE sex != 'M' OR sex is NULL;

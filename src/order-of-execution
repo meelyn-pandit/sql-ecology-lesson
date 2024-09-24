@@ -1,0 +1,20 @@
+-- order of execution
+
+-- don't need to display a column to sort by it
+SELECT genus, species
+FROM species
+WHERE taxa = 'Bird'
+ORDER BY species_id ASC;
+
+-- sorting occurs earlier in the computational pipeline than field selection
+-- order of operations:
+	-- 1. filtering rows according to WHERE
+	-- 2. sorting results according to ORDER BY
+	-- 3. displaying requested columns or expressions.
+-- clauses are written in a fixed order: SELECT, FROM, WHERE, then ORDER BY.
+
+-- Challenge - from surveys, display three date fields, species_id, and weight in kg (rounded to two decimal places), for individuals captured in 1999, ordered alphabetically by the species_id
+SELECT year, month, day, species_id, ROUND(weight/1000, 2)
+FROM surveys 
+WHERE (year = 1999) 
+ORDER BY species_id ASC;
