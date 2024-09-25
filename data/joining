@@ -1,0 +1,24 @@
+-- joins - to combine data from two tables we use JOIN clause, which comes after the FROM clause
+-- JOIN keyword combined with ON is used to combine fields from separate tables.
+-- ON tells computer which columns provide the link between two tables
+
+SELECT *
+FROM surveys
+JOIN species
+ON surveys.species_id = species.species_id;
+
+--ON is like WHERE. it filters things out according to a test condition
+
+-- alternatively we can used the word USING as a short-hand. USING only works on columns which share the same name.
+SELECT *
+FROM surveys
+JOIN species
+USING (species_id);
+
+-- the output with USING will only have one species_id column (ON had two)
+
+-- joining surveys and species by species_id without having species_id in the table
+SELECT surveys.year, surveys.month, surveys.day, species.genus, species.species
+FROM surveys
+JOIN species
+ON surveys.species_id = species.species_id;
