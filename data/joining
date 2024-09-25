@@ -22,3 +22,158 @@ SELECT surveys.year, surveys.month, surveys.day, species.genus, species.species
 FROM surveys
 JOIN species
 ON surveys.species_id = species.species_id;
+
+-- challenge - write a query that returns the genus, species name, and the weight of every individual captured at the site
+SELECT species.genus, species.species, surveys.weight
+FROM surveys
+JOIN species
+WHERE species.species_id = surveys.species_id;
+
+-- different join types - count number of records returned by our original join query - 34786
+SELECT COUNT(*)
+FROM surveys
+JOIN species
+USING (species_id);
+
+-- number is different than number of records in survey DATABASE - 35549
+SELECT COUNT(*) FROM surveys;
+
+-- that is because by default sql only returns records where the joining value is present in the joined columns of both tables (INNER JOIN).
+
+-- can also tell the computer that we wish to keep all the records in the first table by using a LEFT OUTER JOIN or LEFT JOIN for short
+
+SELECT COUNT(*)
+FROM surveys
+LEFT JOIN species
+USING (species_id);
+-- count is now 35549
+
+-- challenge - count the number of records in the surveys table that have a null value in the species_id COLUMN
+SELECT COUNT(*)
+FROM surveys
+WHERE species_id IS NULL;
+
+-- combinbing joins with sorting and aggregation - joins can be combined with sorting, filtering and aggregation. 
+-- average mass of the individuals on each different type of treatment
+SELECT plots.plot_type, AVG(surveys.weight)
+FROM surveys
+JOIN plots
+ON surveys.plot_id = plots.plot_id
+GROUP BY plots.plot_type;
+
+-- challenge - write a query that returns the number of animals caught of each genus in each plot. Order the results by plot number (ascending) and by descending number of individuals in each plot
+SELECT surveys.plot_id, species.genus, COUNT(*) AS number_indiv
+FROM surveys
+JOIN species
+ON surveys.species_id = species.species_id
+GROUP BY species.genus, surveys.plot_id
+ORDER BY surveys.plot_id ASC, number_indiv DESC;
+
+-- challenge - write a query that finds the average weight of each rodent species (i.e. only include species with rodent in taxa field)
+SELECT surveys.species_id, AVG(surveys.weight)
+FROM surveys
+JOIN species
+ON surveys.species_id = species.species_id
+WHERE species.taxa = 'Rodent'
+GROUP BY surveys.species_id;
+
+-- functions COALESCE and NULLIF
+-- COALESCE allows us to specify a value to use in place of NULL
+-- represent unknown sexes with U instead of NULL
+
+SELECT species_id, sex, COALESCE(sex, 'U')
+FROM surveys;
+
+-- challenge - write a query that returns 30 instead of NULL for values in the hindfoot_length COLUMN
+SELECT COALESCE(surveys.hindfoot_length, 30)
+FROM surveys;
+
+-- challenge - write a query that calculates the average hind-foot length of each species, assuming that unknown lengths are 30
+SELECT surveys.species_id, surveys.hindfoot_length, AVG(COALESCE(surveys.hindfoot_length,30))
+FROM surveys
+GROUP BY surveys.species_id;
+
+-- using COALESCE with JOIN
+SELECT surveys.year, surveys.month, surveys.day, species.genus, species.species
+FROM surveys
+JOIN species
+ON COALESCE(surveys.species_id, 'AB') = species.species_id;
+
+-- challenge - write a query that returns the number of animals caught of each genus in each plot, assuming that unknown species are all of the genus 'Rodent'
+SELECT surveys.plot_id, COALESCE(species.genus, 'Rodent') AS genus2, COUNT(*)
+FROM surveys
+LEFT JOIN species
+ON surveys.species_id=species.species_id
+GROUP BY plot_id, genus2;
+
+--inverse of COALESCE is NULLIF. this returns NULL if the first argument is equal to the second argument. If the two are not equal, the first argument is returned
+-- null out plot 7
+SELECT species_id, plot_id, NULLIF(plot_id, 7)
+FROM surveys;
+
+-- challenge - write a query that returns genus names (no repeats), sorted from longest genus name down to shortest
+SELECT DISTINCT genus
+FROM species
+ORDER BY LENGTH(genus) DESC;
+
+-- making aliases makes things easier when joining tables
+SELECT surv.year AS YR, surv.month AS mo, surv.day AS day, sp.genus AS gen, sp.species AS sp
+FROM surveys AS surv
+JOIN species AS sp
+ON surv.species_id = sp.species_id;
+
+--final challenges
+-- 1. how many plots from each type are there?
+SELECT DISTINCT plots.plot_type, COUNT(*)
+FROM plots
+GROUP BY plot_type;
+
+--2. how many specimens are of each sex are there for each year, including those whose sex is unknown?
+SELECT surveys.species_id, surveys.sex, surveys.year, COUNT(*)
+FROM surveys
+GROUP BY sex, year;
+
+--3. how many specimens of each species were captured in each type of plot, excluding specimens of unknown species?
+SELECT surveys.species_id, surveys.plot_id, COUNT(*)
+FROM surveys
+JOIN plots USING(plot_id)
+WHERE species_id IS NOT NULL
+GROUP BY plot_id, species_id;
+
+--4. what is the average weight of each taxa?
+-- SELECT species.taxa, surveys.weight, COUNT(*)
+-- FROM surveys
+-- JOIN species
+-- ON surveys.species_id = species.species_id
+-- WHERE taxa = 'Reptile';
+-- ORDER BY taxa ASC;
+SELECT SUM(surveys.weight), COUNT(surveys.weight), SUM(surveys.weight)/COUNT(surveys.weight), species.taxa 
+FROM surveys
+JOIN species
+ON surveys.species_id =  species.species_id
+GROUP BY taxa;
+
+--5. what are the minimum, maximum and average weight for each species of rodent?
+SELECT MIN(surveys.weight) AS min_weight, MAX(surveys.weight) AS max_weight, AVG(surveys.weight), species.taxa, species.species
+FROM surveys
+JOIN species
+ON surveys.species_id = species.species_id
+WHERE taxa = 'Rodent'
+GROUP BY species;
+
+--6. what is the average hindfoot length for male and female rodent of each species? is there a male/female difference
+SELECT AVG(surveys.hindfoot_length), surveys.sex, surveys.species_id
+FROM surveys
+JOIN species
+ON surveys.species_id = species.species_id
+WHERE sex IS NOT NULL
+GROUP BY surveys.species_id, sex;
+
+--7. what is the average weight of each rodent species over the course of the years? is there any noticeable trend for any of the species
+SELECT surveys.species_id, surveys.year, species.taxa,  ROUND(AVG(surveys.weight),2) AS avg_weight
+FROM surveys
+JOIN species
+USING (species_id)
+WHERE taxa = 'Rodent'
+GROUP BY species_id, year;
+
